@@ -1,0 +1,9 @@
+Flask
+Flask-SocketIO
+eventlet
+gunicorn
+python-dotenv
+Werkzeug
+Flask-Dance
+requests
+psycopg2-binary

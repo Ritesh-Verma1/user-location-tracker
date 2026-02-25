@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Track Sphere | Live Location</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Particle.js -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- AOS Scroll Animation -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <style>
+    :root{
+      --bg1:#0b1222;
+      --bg2:#0f172a;
+      --card: rgba(255,255,255,0.08);
+      --card2: rgba(255,255,255,0.10);
+      --border: rgba(255,255,255,0.14);
+      --text: rgba(255,255,255,0.90);
+      --muted: rgba(255,255,255,0.65);
+      --brand: #60a5fa;
+      --brand2:#3b82f6;
+      --good:#34d399;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --shadow: 0 12px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
+
+    *{ margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+    body{
+      background: radial-gradient(circle at 20% 10%, #1e293b, var(--bg2) 60%, #070b16 100%);
+      color: var(--text);
+      overflow-x:hidden;
+    }
+    a{ color:inherit; text-decoration:none; }
+
+    #particles-js{
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .container{
+      width: min(1150px, 92%);
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Navbar */
+    nav{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(14px);
+      background: rgba(10,14,25,0.45);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .nav-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 18px 0;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:700;
+      letter-spacing:0.4px;
+    }
+    .brand-badge{
+      width: 32px;
+      height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      box-shadow: 0 10px 25px rgba(59,130,246,0.35);
+      display: grid;
+      place-items: center;
+      overflow: hidden; /* THIS is the stopper */
+      flex: 0 0 54px;
+    }
+
+    .brand-logo{
+      width: 90%;
+      height: 90%;
+      object-fit: cover;
+      display: block;          /* avoids weird inline spacing */
+      transform: scale(1.06);  /* tiny zoom so it fills like an icon */
+    }
+    .brand span{ color: var(--brand); }
+    .nav-links{
+      display:flex;
+      gap:18px;
+      align-items:center;
+      color: var(--muted);
+      font-weight:500;
+      font-size: 14px;
+    }
+    .nav-links a:hover{ color: var(--text); }
+    .nav-actions{ display:flex; gap:10px; align-items:center; }
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight:600;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0px); opacity: 0.95; }
+
+    .btn-ghost{
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(10px);
+    }
+    .btn-primary{
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      color: white;
+      box-shadow: 0 12px 30px rgba(59,130,246,0.25);
+    }
+
+    /* Hero */
+    .hero{
+      padding: 25px 0 40px;
+      display:grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 40px;
+      align-items:center;
+      min-height: 78vh;
+    }
+
+    .kicker{
+      display:inline-flex;
+      gap: 8px;
+      align-items:center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(96,165,250,0.12);
+      border: 1px solid rgba(96,165,250,0.20);
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .dot{
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 16px rgba(52,211,153,0.7);
+    }
+
+    .hero h1{
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: 1.1;
+      letter-spacing: -0.8px;
+    }
+    .hero h1 span{ color: var(--brand); }
+
+    .sub{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 58ch;
+    }
+
+    .cta-row{
+      margin-top: 22px;
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+
+    .trust-row{
+      margin-top: 22px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .hero-card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      position: relative;
+      overflow:hidden;
+    }
+    .hero-card::before{
+      content:"";
+      position:absolute;
+      inset:-80px -80px auto auto;
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle, rgba(96,165,250,0.35), transparent 60%);
+      filter: blur(8px);
+    }
+
+    .live-counter{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.20);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .live-counter strong{
+      color: var(--good);
+      font-size: 22px;
+    }
+    .muted{ color: var(--muted); }
+
+    .globe-wrap{
+      margin-top: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.22);
+      padding: 12px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height: 330px;
+    }
+
+    /* Sections */
+    .section{ padding: 70px 0; }
+    .section-title{ text-align:center; margin-bottom: 26px; }
+    .section-title h2{ font-size: 30px; letter-spacing: -0.4px; }
+    .section-title p{ margin-top: 10px; color: var(--muted); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      transition: transform .18s ease;
+    }
+    .card:hover{ transform: translateY(-4px); }
+
+    .icon{
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      background: rgba(96,165,250,0.14);
+      border: 1px solid rgba(96,165,250,0.22);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 800;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 12px;
+    }
+    .card h3{ font-size: 16px; margin-bottom: 8px; }
+    .card p{ color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+
+    /* Preview / Screenshots */
+    .preview-grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .shot{
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.22);
+      box-shadow: 0 12px 34px rgba(0,0,0,0.28);
+      overflow:hidden;
+      transition: transform .18s ease;
+    }
+    .shot:hover{ transform: translateY(-4px); }
+    .shot-top{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.06);
+      font-size: 13px;
+      color: rgba(255,255,255,0.82);
+    }
+    .dots{
+      display:flex; gap:6px;
+    }
+    .dots i{
+      width:10px; height:10px; border-radius:50%;
+      background: rgba(255,255,255,0.22);
+      display:inline-block;
+    }
+    .shot-body{
+      padding: 16px;
+    }
+    .mock-map{
+      height: 150px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background:
+        radial-gradient(circle at 30% 40%, rgba(96,165,250,0.25), transparent 55%),
+        radial-gradient(circle at 70% 60%, rgba(52,211,153,0.18), transparent 55%),
+        linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      position: relative;
+      overflow:hidden;
+    }
+    .pin{
+      position:absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 18px rgba(96,165,250,0.65);
+      top: 40%;
+      left: 55%;
+    }
+    .pin::after{
+      content:"";
+      position:absolute;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(96,165,250,0.35);
+      top: -10px; left: -10px;
+    }
+    .mock-list{
+      margin-top: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      font-size: 13px;
+    }
+    .badge{
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(52,211,153,0.14);
+      border: 1px solid rgba(52,211,153,0.20);
+      color: rgba(255,255,255,0.88);
+      font-weight: 700;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    /* System Overview */
+    .overview-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+      align-items: stretch;
+    }
+    .overview-card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 12px 34px rgba(0,0,0,0.28);
+      position: relative;
+      overflow:hidden;
+    }
+    .overview-card h3{
+      font-size: 16px;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+    }
+    .kpis{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .kpi{
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .kpi .label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .kpi .value{
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .kpi .hint{
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.70);
+    }
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(52,211,153,0.12);
+      border: 1px solid rgba(52,211,153,0.20);
+      color: rgba(255,255,255,0.88);
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .status-dot{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 14px rgba(52,211,153,0.75);
+    }
+    .mini-chart{
+      margin-top: 10px;
+      height: 180px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background:
+        radial-gradient(circle at 30% 40%, rgba(96,165,250,0.20), transparent 55%),
+        linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      padding: 14px;
+      position: relative;
+      overflow:hidden;
+    }
+    .chart-grid{
+      position:absolute;
+      inset: 14px 14px 36px 14px;
+      border-left: 1px dashed rgba(255,255,255,0.18);
+      border-bottom: 1px dashed rgba(255,255,255,0.18);
+    }
+    .chart-line{
+      position:absolute;
+      left: 18px;
+      right: 18px;
+      top: 24px;
+      bottom: 54px;
+      opacity: 0.9;
+    }
+    .chart-line svg{ width:100%; height:100%; }
+    .chart-labels{
+      position:absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 10px;
+      display:flex;
+      justify-content:space-between;
+      font-size: 12px;
+      color: rgba(255,255,255,0.72);
+    }
+
+    /* Footer */
+    footer{
+      padding: 40px 0 60px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Modals */
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.62);
+      display:none;
+      justify-content:center;
+      align-items:center;
+      z-index: 50;
+      padding: 20px;
+    }
+    .modal-content{
+      width: min(420px, 96%);
+      background: rgba(17,24,39,0.85);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(16px);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+      position: relative;
+      animation: pop .14s ease-out;
+    }
+    @keyframes pop{
+      from{ transform: translateY(10px) scale(0.98); opacity: 0; }
+      to{ transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .close-btn{
+      position:absolute;
+      top: 10px;
+      right: 14px;
+      font-size: 26px;
+      font-weight: 800;
+      cursor:pointer;
+      color: #fff;
+      opacity: 0.85;
+      user-select:none;
+    }
+    .close-btn:hover{ opacity:1; transform: scale(1.06); }
+
+    .modal-content h3{
+      margin-bottom: 14px;
+      letter-spacing: -0.2px;
+    }
+    .modal-content input{
+      width: 100%;
+      padding: 12px 12px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.25);
+      color: white;
+      outline: none;
+    }
+    .modal-content input::placeholder{ color: rgba(255,255,255,0.55); }
+
+    .modal-content button{
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border:none;
+      cursor:pointer;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      box-shadow: 0 12px 30px rgba(59,130,246,0.20);
+    }
+    .divider{
+      height: 1px;
+      background: rgba(255,255,255,0.10);
+      margin: 14px 0;
+    }
+    .btn-google{
+      background: #db4437 !important;
+      box-shadow: 0 12px 30px rgba(219,68,55,0.18) !important;
+    }
+    .mutelink{
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align:center;
+    }
+    .mutelink span{
+      color: var(--brand);
+      cursor:pointer;
+      font-weight: 700;
+    }
+
+    /* --- Track Sphere modal toast (Register msg) --- */
+    .ts-toast{
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(52,211,153,0.28);
+      background: rgba(52,211,153,0.14);
+      color: rgba(255,255,255,0.92);
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+      width: 100%;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.20);
+      backdrop-filter: blur(10px);
+
+      transform: translateY(10px);
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .ts-toast.show{
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .ts-toast.success{
+      border-color: rgba(52,211,153,0.28);
+      background: rgba(52,211,153,0.14);
+      color: rgba(255,255,255,0.92);
+    }
+    .ts-toast.error{
+      border-color: rgba(239,68,68,0.35);
+      background: rgba(239,68,68,0.14);
+      color: #fecaca;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px){
+      .hero{ grid-template-columns: 1fr; padding: 50px 0 20px; }
+      .grid{ grid-template-columns: 1fr; }
+      .preview-grid{ grid-template-columns: 1fr; }
+      .overview-grid{ grid-template-columns: 1fr; }
+      .nav-links{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="particles-js"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="container">
+      <div class="nav-inner">
+        <a class="brand" href="#">
+          <span class="brand-badge">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                 alt="Track Sphere"
+                 class="brand-logo">
+          </span>
+          Track <span>Sphere</span>
+        </a>
+        
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#preview">Preview</a>
+          <a href="#overview">Overview</a>
+        </div>
+
+        <div class="nav-actions">
+          <button class="btn btn-primary" onclick="openLogin()">Log in</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="container">
+    <div class="hero">
+      <div>
+        <div class="kicker">
+          <div class="dot"></div>
+          Live tracking • Secure login • Real-time updates
+        </div>
+
+        <h1>
+          Track user <span>locations</span> in real time — fast, clean, and reliable.
+        </h1>
+
+        <p class="sub">
+          A modern tracking UI for your Flask project. Email verification, Google sign-in, and live counters —
+          the basics done right.
+        </p>
+
+        <div class="cta-row">
+          <button class="btn btn-primary" onclick="openLogin()">Start tracking</button>
+          <button class="btn btn-ghost" onclick="openRegister()">Create account</button>
+        </div>
+
+        <div class="trust-row">
+          <div class="pill">⚡ SocketIO live updates</div>
+          <div class="pill">🔒 Email verification</div>
+          <div class="pill">🌐 Google OAuth</div>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="live-counter">
+          <div>
+            <div class="muted" style="font-size:13px;">Users online right now</div>
+            <strong><span id="activeCount">0</span></strong>
+          </div>
+          <div class="pill">🟢 Live</div>
+        </div>
+
+        <div class="globe-wrap">
+          <div id="globeMount"></div>
+        </div>
+
+        <div class="muted" style="font-size:12.5px; margin-top:10px;">
+          Tip: press <b>Esc</b> to close popups.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section" id="features">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up">
+        <h2>Features</h2>
+        <p>Clean tracking flow, with the stuff that actually matters.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card" data-aos="fade-up">
+          <div class="icon">⚡</div>
+          <h3>Real-time updates</h3>
+          <p>Socket-powered live tracking so the map stays updated without refresh spam.</p>
+        </div>
+
+        <div class="card" data-aos="fade-up" data-aos-delay="80">
+          <div class="icon">🔒</div>
+          <h3>Email verification</h3>
+          <p>Stops fake signups and keeps your user base clean.</p>
+        </div>
+
+        <div class="card" data-aos="fade-up" data-aos-delay="160">
+          <div class="icon">🌐</div>
+          <h3>Google sign-in</h3>
+          <p>Quick onboarding with OAuth so users can get in with one click.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW / SCREENSHOTS -->
+  <div class="section" id="preview" style="padding-top:10px;">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up">
+        <h2>Preview</h2>
+        <p>Mock UI shots — so it feels like a real product, not a homework submission.</p>
+      </div>
+
+      <div class="preview-grid">
+        <div class="shot" data-aos="fade-up">
+          <div class="shot-top">
+            <div style="font-weight:700;">Live Map</div>
+            <div class="dots"><i></i><i></i><i></i></div>
+          </div>
+          <div class="shot-body">
+            <div class="mock-map">
+              <div class="pin"></div>
+            </div>
+            <div class="mock-list">
+              <div class="row"><span>devil • 18m accuracy</span><span class="badge">LIVE</span></div>
+              <div class="row"><span>user_02 • 24m accuracy</span><span class="badge">LIVE</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shot" data-aos="fade-up" data-aos-delay="80">
+          <div class="shot-top">
+            <div style="font-weight:700;">Playback</div>
+            <div class="dots"><i></i><i></i><i></i></div>
+          </div>
+          <div class="shot-body">
+            <div class="mock-map" style="height: 150px;">
+              <div class="pin" style="top:55%; left:45%;"></div>
+            </div>
+            <div class="mock-list">
+              <div class="row"><span>10:21 AM • Point A</span><span class="badge">OK</span></div>
+              <div class="row"><span>10:34 AM • Point B</span><span class="badge">OK</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="shot" data-aos="fade-up" data-aos-delay="160">
+          <div class="shot-top">
+            <div style="font-weight:700;">Access Control</div>
+            <div class="dots"><i></i><i></i><i></i></div>
+          </div>
+          <div class="shot-body">
+            <div class="mock-list" style="margin-top:0;">
+              <div class="row"><span>Email verified</span><span class="badge">SECURE</span></div>
+              <div class="row"><span>Google OAuth enabled</span><span class="badge">SECURE</span></div>
+              <div class="row"><span>Session protected routes</span><span class="badge">SECURE</span></div>
+            </div>
+            <div class="muted" style="font-size:13px; margin-top:12px;">
+              You can show these as “screenshots” even before the final UI is done.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYSTEM OVERVIEW (replaces Demo) -->
+  <div class="section" id="overview" style="padding-top:10px;">
+    <div class="container">
+      <div class="section-title" data-aos="fade-up">
+        <h2>System Overview</h2>
+        <p>Quick health check and activity snapshot — no fluff.</p>
+      </div>
+
+      <div class="overview-grid">
+        <div class="overview-card" data-aos="fade-up">
+          <h3>Live system status</h3>
+
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            All services operational
+          </div>
+
+          <div class="kpis">
+            <div class="kpi">
+              <div class="label">Active users</div>
+              <div class="value"><span id="activeCount2">0</span></div>
+              <div class="hint">Updates every 3 seconds</div>
+            </div>
+
+            <div class="kpi">
+              <div class="label">Session</div>
+              <div class="value" id="sessionState">Guest</div>
+              <div class="hint">Login required for tracking</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="overview-card" data-aos="fade-up" data-aos-delay="80">
+          <h3>User activity (mock)</h3>
+          <div class="mini-chart">
+            <div class="chart-grid"></div>
+            <div class="chart-line" aria-hidden="true">
+              <svg viewBox="0 0 100 60" preserveAspectRatio="none">
+                <polyline points="0,55 20,45 40,42 60,30 80,22 100,10"
+                          fill="none"
+                          stroke="rgba(96,165,250,0.9)"
+                          stroke-width="2.5"/>
+                <circle cx="100" cy="10" r="2.6" fill="rgba(52,211,153,0.95)"/>
+              </svg>
+            </div>
+            <div class="chart-labels">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+          </div>
+          <div class="muted" style="margin-top:10px; font-size:12.5px;">
+            Replace this with real analytics later (optional).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div style="font-weight:700; color: rgba(255,255,255,0.8);">Track Sphere</div>
+      <div style="margin-top:10px;">Built with Flask • SocketIO • SQLite • Google OAuth</div>
+      <div style="margin-top:6px; font-size: 12px;">© 2026 — Student project landing page.</div>
+    </div>
+  </footer>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModals()">&times;</span>
+      <h3>Login</h3>
+
+      <div id="loginErrorBox" style="
+        display:none;
+        margin-bottom:12px;
+        padding:10px 12px;
+        border-radius:12px;
+        background: rgba(239,68,68,0.14);
+        border: 1px solid rgba(239,68,68,0.35);
+        color:#fecaca;
+        font-size:13px;
+        text-align:center;
+      "></div>
+
+      <form id="loginForm">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+
+        <div style="display:flex; justify-content:flex-end; margin:-6px 2px 10px;">
+          <a href="#" id="forgotToggle" style="font-size:12.5px; color: rgba(255,255,255,0.72);">
+            Forgot password?
+          </a>
+        </div>
+
+        <button type="submit">Login</button>
+      </form>
+
+      <div id="forgotPanel" style="display:none; margin-top:12px;">
+        <div style="height:1px; background: rgba(255,255,255,0.10); margin: 12px 0;"></div>
+
+        <div style="font-size:13px; color: rgba(255,255,255,0.78); margin-bottom:10px;">
+          Enter your email and we’ll send a reset link.
+        </div>
+
+        <div id="forgotMsg" style="
+          display:none;
+          margin-bottom:12px;
+          padding:10px 12px;
+          border-radius:12px;
+          background: rgba(59,130,246,0.14);
+          border: 1px solid rgba(59,130,246,0.30);
+          color:#bfdbfe;
+          font-size:13px;
+          text-align:center;
+        "></div>
+
+        <form id="forgotForm">
+          <input type="email" name="email" placeholder="Email address" required>
+          <button type="submit" style="
+            width:100%;
+            padding:12px;
+            border-radius:12px;
+            border:none;
+            cursor:pointer;
+            font-weight:700;
+            color:white;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+          ">
+            Send reset link
+          </button>
+        </form>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+          <a href="#" id="forgotClose" style="font-size:12.5px; color: rgba(255,255,255,0.55);">
+            Back to login
+          </a>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <a href="/login/google">
+        <button type="button" class="btn-google">Login with Google</button>
+      </a>
+
+      <div class="mutelink">
+        Don’t have an account? <span onclick="openRegister()">Register</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER MODAL -->
+  <div class="modal" id="registerModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModals()">&times;</span>
+      <h3>Register</h3>
+
+      <form id="registerForm">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Create Account</button>
+      </form>
+
+      <div id="registerMsg" class="ts-toast" aria-live="polite"></div>
+
+      <div class="mutelink">
+        Already have an account? <span onclick="openLogin()">Login</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- Modal Controls ---------- */
+    function closeModals() {
+      document.getElementById("loginModal").style.display = "none";
+      document.getElementById("registerModal").style.display = "none";
+
+      // reset forgot panel when closing modals
+      showForgot(false);
+    }
+
+    function openLogin() {
+      closeModals();
+      document.getElementById("loginModal").style.display = "flex";
+    }
+
+    function openRegister() {
+      closeModals();
+      document.getElementById("registerModal").style.display = "flex";
+
+      // clear old register toast (so it doesn't look reused)
+      const registerMsg = document.getElementById("registerMsg");
+      if (registerMsg) {
+        registerMsg.classList.remove("show", "success", "error");
+        registerMsg.style.display = "none";
+        registerMsg.textContent = "";
+      }
+    }
+
+    window.addEventListener("click", function(e) {
+      if (e.target.classList && e.target.classList.contains("modal")) closeModals();
+    });
+
+    window.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") closeModals();
+    });
+
+    /* ---------- LOGIN MODAL AJAX (show error inside popup) ---------- */
+    const loginForm = document.getElementById("loginForm");
+    const loginErrorBox = document.getElementById("loginErrorBox");
+
+    if (loginForm) {
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        loginErrorBox.style.display = "none";
+        loginErrorBox.textContent = "";
+
+        const formData = new FormData(loginForm);
+
+        try {
+          const res = await fetch("/login", {
+            method: "POST",
+            body: formData,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+          });
+
+          const data = await res.json();
+
+          if (!res.ok || !data.success) {
+            loginErrorBox.textContent = data.error || "Invalid username or password.";
+            loginErrorBox.style.display = "block";
+            return;
+          }
+
+          window.location.href = data.redirect || "/map";
+        } catch (err) {
+          loginErrorBox.textContent = "Network/server error. Try again.";
+          loginErrorBox.style.display = "block";
+        }
+      });
+    }
+
+    /* ---------- Forgot Password (toggle + AJAX) ---------- */
+    const forgotToggle = document.getElementById("forgotToggle");
+    const forgotPanel  = document.getElementById("forgotPanel");
+    const forgotClose  = document.getElementById("forgotClose");
+    const forgotForm   = document.getElementById("forgotForm");
+    const forgotMsg    = document.getElementById("forgotMsg");
+
+    function showForgot(open) {
+      if (!forgotPanel) return;
+      forgotPanel.style.display = open ? "block" : "none";
+
+      if (!open) {
+        if (forgotMsg) {
+          forgotMsg.style.display = "none";
+          forgotMsg.textContent = "";
+        }
+        forgotForm?.reset();
+      }
+    }
+
+    forgotToggle?.addEventListener("click", (e) => {
+      e.preventDefault();
+      showForgot(true);
+    });
+
+    forgotClose?.addEventListener("click", (e) => {
+      e.preventDefault();
+      showForgot(false);
+    });
+
+    forgotForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!forgotMsg) return;
+
+      forgotMsg.style.display = "none";
+      forgotMsg.textContent = "";
+
+      const formData = new FormData(forgotForm);
+
+      try {
+        const res = await fetch("/forgot-password", {
+          method: "POST",
+          body: formData,
+          headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          forgotMsg.style.background = "rgba(239,68,68,0.14)";
+          forgotMsg.style.borderColor = "rgba(239,68,68,0.35)";
+          forgotMsg.style.color = "#fecaca";
+          forgotMsg.textContent = data.error || "No account found with that email.";
+          forgotMsg.style.display = "block";
+          return;
+        }
+
+        forgotMsg.style.background = "rgba(52,211,153,0.14)";
+        forgotMsg.style.borderColor = "rgba(52,211,153,0.28)";
+        forgotMsg.style.color = "rgba(255,255,255,0.92)";
+        forgotMsg.textContent = data.message || "Reset link generated. Check your email/terminal.";
+        forgotMsg.style.display = "block";
+      } catch (err) {
+        forgotMsg.style.background = "rgba(239,68,68,0.14)";
+        forgotMsg.style.borderColor = "rgba(239,68,68,0.35)";
+        forgotMsg.style.color = "#fecaca";
+        forgotMsg.textContent = "Network/server error. Try again.";
+        forgotMsg.style.display = "block";
+      }
+    });
+
+    /* ---------- REGISTER MODAL AJAX + TOAST ---------- */
+    const registerForm = document.getElementById("registerForm");
+    const registerMsg  = document.getElementById("registerMsg");
+
+    function showRegisterToast(message, type = "success") {
+      if (!registerMsg) return;
+
+      registerMsg.classList.remove("success", "error", "show");
+      registerMsg.classList.add(type === "error" ? "error" : "success");
+      registerMsg.textContent = message;
+
+      registerMsg.style.display = "block";
+      requestAnimationFrame(() => registerMsg.classList.add("show"));
+
+      clearTimeout(window.__ts_register_toast_timer);
+      window.__ts_register_toast_timer = setTimeout(() => {
+        registerMsg.classList.remove("show");
+        setTimeout(() => { registerMsg.style.display = "none"; }, 220);
+      }, 4000);
+    }
+
+    if (registerForm) {
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(registerForm);
+
+        try {
+          const res = await fetch("/register", {
+            method: "POST",
+            body: formData,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+          });
+
+          const data = await res.json();
+
+          if (!res.ok || !data.success) {
+            showRegisterToast(data.error || "Registration failed.", "error");
+            return;
+          }
+
+          showRegisterToast(data.message || "Verification email sent. Please check your inbox.", "success");
+          registerForm.reset();
+
+        } catch (err) {
+          showRegisterToast("Server error. Try again.", "error");
+        }
+      });
+    }
+
+    /* ---------- Real Active Users ---------- */
+    async function fetchActiveUsers() {
+      try{
+        const res = await fetch("/api/active_users");
+        const data = await res.json();
+
+        const c1 = document.getElementById("activeCount");
+        const c2 = document.getElementById("activeCount2");
+
+        if (c1) c1.innerText = data.count;
+        if (c2) c2.innerText = data.count;
+      }catch(err){}
+    }
+    setInterval(fetchActiveUsers, 3000);
+    fetchActiveUsers();
+
+    // show session state on overview
+    (function updateSessionState(){
+      const el = document.getElementById("sessionState");
+      if (!el) return;
+      el.textContent = "Guest";
+    })();
+
+    /* ---------- Particles ---------- */
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 120 },
+        size: { value: 2 },
+        move: { speed: 0.6 },
+        line_linked: { enable: false }
+      }
+    });
+
+    /* ---------- 3D Globe ---------- */
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(320, 320);
+    document.getElementById("globeMount").appendChild(renderer.domElement);
+
+    const geometry = new THREE.SphereGeometry(1.5, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0x3b82f6, wireframe: true });
+    const globe = new THREE.Mesh(geometry, material);
+    scene.add(globe);
+    camera.position.z = 4;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      globe.rotation.y += 0.005;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    /* ---------- Scroll Animation ---------- */
+    AOS.init();
+  </script>
+</body>
+</html>

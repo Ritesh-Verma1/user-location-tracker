@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Track Sphere | Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    :root{
+      --bg2:#0f172a;
+
+      /* Your original tokens kept */
+      --card: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.14);
+
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.65);
+
+      --brand:#60a5fa;
+      --brand2:#3b82f6;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --danger:#ff6b6b;
+      --shadow: 0 14px 45px rgba(0,0,0,0.35);
+      --radius: 18px;
+
+      /* NEW: dashboard sizing helpers */
+      --gap: 16px;
+      --statsH: 280px; /* if your stats card grows, increase to 300px */
+      --sidebarW: 420px;
+    }
+
+    *{ margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+    body{
+      background: radial-gradient(circle at 20% 10%, #1e293b, var(--bg2) 60%, #070b16 100%);
+      color: var(--text);
+      overflow:hidden;
+    }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 2000; /* topbar always wins */
+      backdrop-filter: blur(14px);
+      background: rgba(10,14,25,0.55);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .topbar-inner{
+      width: min(1200px, 94%);
+      margin: 0 auto;
+      padding: 16px 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800; user-select:none;
+    }
+    .brand-badge{
+      width: 34px; height: 34px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      box-shadow: 0 10px 25px rgba(59,130,246,0.35);
+    }
+    .brand span{ color: var(--brand); }
+
+    .actions{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+
+    .btn{
+      border:none; cursor:pointer;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      transition: transform .14s ease, opacity .14s ease;
+      text-decoration: none;
+
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.20);
+      backdrop-filter: blur(10px);
+      color: #0b1222; /* FIX: readable button text */
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); opacity: 0.95; }
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      border: none;
+      box-shadow: 0 12px 30px rgba(59,130,246,0.22);
+      color: white;
+    }
+
+    .page{
+      position: relative;                 /* stacking context */
+      height: calc(100vh - 68px);
+      width: 100%;
+    }
+
+    /* Put map behind all panels */
+    #map{
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    /* Leaflet controls under panels */
+    .leaflet-control-container{
+      z-index: 500;
+    }
+
+    /* Panels always above map */
+    .panel{
+      position: absolute;
+      z-index: 1000;
+      background: rgba(255,255,255,0.78);  /* FIX: lighter panel base */
+      border: 1px solid rgba(255,255,255,0.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+
+      /* FIX: readable text everywhere */
+      color: #0b1222;
+    }
+
+    /* ===== STATS ===== */
+    .stats{
+      top: var(--gap); left: var(--gap);
+      width: min(380px, calc(100% - 32px));
+      padding: 16px;
+      overflow:hidden;
+    }
+    .stats::before{
+      content:"";
+      position:absolute;
+      inset:-90px -90px auto auto;
+      width: 170px; height: 170px;
+      background: radial-gradient(circle, rgba(96,165,250,0.35), transparent 60%);
+      filter: blur(8px);
+    }
+    .stats h2{
+      font-size: 15px;
+      margin-bottom: 12px;
+      letter-spacing: -0.2px;
+      position: relative;
+      color: #0b1222;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: relative;
+    }
+    .mini{
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.60); /* FIX: not dark */
+      border: 1px solid rgba(11,18,34,0.12);
+    }
+    .mini .label{ color: rgba(11,18,34,0.65); font-size: 12px; }
+    .mini .value{ margin-top: 4px; font-weight: 800; font-size: 15px; color: #0b1222; }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(11,18,34,0.12);
+      color: rgba(11,18,34,0.75);
+      font-size: 12px;
+      margin-top: 12px;
+      position: relative;
+      width: fit-content;
+    }
+    .dot{
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 14px rgba(52,211,153,0.6);
+    }
+
+    /* ===== CONTROLS (RIGHT) ===== */
+    .controls{
+      right: var(--gap); top: var(--gap);
+      width: 260px;
+      padding: 14px;
+    }
+    .controls h3{
+      font-size: 14px;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+      color: #0b1222;
+    }
+    .stack{ display:flex; flex-direction:column; gap:10px; }
+    .btn-full{ width: 100%; justify-content:center; padding: 11px 12px; }
+
+    /* ===== ADMIN SIDEBAR (LEFT BOTTOM) =====
+       FIX: starts below stats and fills remaining height
+    */
+    .sidebar{
+      left: var(--gap);
+
+      /* start below stats card */
+      top: calc(var(--gap) + var(--statsH) + 12px);
+      bottom: var(--gap);
+
+      width: min(var(--sidebarW), calc(100% - 32px));
+      padding: 14px;
+
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+
+      overflow: hidden; /* prevents spill overlap */
+    }
+    .sidebar-head{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .sidebar-head h3{ font-size: 14px; letter-spacing: -0.2px; color:#0b1222; }
+
+    .search{
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(11,18,34,0.12);
+      background: rgba(255,255,255,0.60);
+      color: #0b1222;
+      outline: none;
+    }
+    .search::placeholder{ color: rgba(11,18,34,0.55); }
+
+    .userlist{
+      overflow:auto;
+      flex: 1; /* FIX: list uses leftover height */
+      padding-right: 4px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .usercard{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(11,18,34,0.12);
+    }
+    .u-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .u-dot{
+      width: 12px; height: 12px; border-radius:50%;
+      border: 2px solid rgba(255,255,255,0.85);
+      flex:0 0 auto;
+    }
+    .u-meta{ min-width:0; }
+    .u-name{
+      font-weight:800; font-size: 13.5px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      color:#0b1222;
+    }
+    .u-sub{
+      margin-top:2px;
+      font-size: 12px;
+      color: rgba(11,18,34,0.65);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .u-actions{ display:flex; gap:8px; flex:0 0 auto; }
+
+    .chip{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,18,34,0.12);
+      background: rgba(255,255,255,0.55);
+      color: #0b1222;
+      cursor:pointer;
+      font-weight: 800;
+      font-size: 12px;
+      user-select:none;
+    }
+
+    /* Details panel inside sidebar */
+    .details{
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(11,18,34,0.12);
+    }
+    .details-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .details-title{
+      font-weight: 900;
+      font-size: 13.5px;
+      letter-spacing: -0.2px;
+      color:#0b1222;
+    }
+    .details-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .kv{
+      padding: 10px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(11,18,34,0.12);
+    }
+    .kv .k{ color: rgba(11,18,34,0.65); font-size: 11.5px; }
+    .kv .v{
+      margin-top: 4px;
+      font-weight: 900;
+      font-size: 13px;
+      color:#0b1222;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+
+    /* Toast */
+    .toast{
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 16px;
+      padding: 12px 14px;
+      max-width: min(760px, calc(100% - 32px));
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      color: rgba(11,18,34,0.70);
+      font-size: 13px;
+    }
+    .tag{
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(11,18,34,0.12);
+      white-space: nowrap;
+      color:#0b1222;
+    }
+    .toast b{ color: #0b1222; }
+
+    /* Leaflet styling */
+    .leaflet-control-zoom a{
+      background: rgba(17,24,39,0.85) !important;
+      color: white !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      backdrop-filter: blur(10px);
+    }
+    .leaflet-control-attribution{
+      background: rgba(17,24,39,0.55) !important;
+      color: rgba(255,255,255,0.65) !important;
+    }
+    .user-div-icon { background: transparent; border: none; }
+    .leaflet-popup-content-wrapper {
+      background: rgba(17,24,39,0.92);
+      color: rgba(255,255,255,0.9);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 14px;
+      backdrop-filter: blur(12px);
+    }
+    .leaflet-popup-tip { background: rgba(17,24,39,0.92); }
+
+    @media (max-width: 820px){
+      .controls{
+        width: min(260px, calc(100% - 32px));
+        top: auto;
+        bottom: 16px;
+        right: 16px;
+      }
+
+      /* On mobile: sidebar becomes shorter and starts lower */
+      :root{ --statsH: 300px; }
+      .sidebar{ top: calc(var(--gap) + var(--statsH) + 12px); }
+
+      .toast{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+  {% set r = role | default('user') %}
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-badge"></div>
+        Track <span>Sphere</span>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="/" title="Back to landing">← Back</a>
+        <a class="btn btn-primary" href="/logout" title="Logout">🚪 Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div id="map"></div>
+
+    <div class="panel stats">
+      <h2>📍 Live Location Dashboard</h2>
+
+      <div class="grid">
+        <div class="mini">
+          <div class="label">Role</div>
+          <div class="value" id="statRole">{{ r }}</div>
+        </div>
+        <div class="mini">
+          <div class="label">Status</div>
+          <div class="value" id="statStatus" style="color: var(--brand2);">Live</div>
+        </div>
+        <div class="mini">
+          <div class="label">Accuracy</div>
+          <div class="value" id="statAccuracy">—</div>
+        </div>
+        <div class="mini">
+          <div class="label">Last Update</div>
+          <div class="value" id="statUpdated">—</div>
+        </div>
+      </div>
+
+      <div class="pill" id="trackingPill">
+        <span class="dot"></span>
+        Tracking enabled
+      </div>
+    </div>
+
+    <div class="panel controls">
+      <h3>Quick actions</h3>
+      <div class="stack">
+        <button class="btn btn-primary btn-full" onclick="recenter()">🎯 Re-center</button>
+        <button class="btn btn-full" onclick="toggleFollow()" id="followBtn">🧲 Follow: ON</button>
+        <button class="btn btn-full" onclick="toggleTracking()" id="trackBtn">⏸ Pause tracking</button>
+
+        {% if r == 'admin' %}
+          <button class="btn btn-full" onclick="fitAllUsers()">🗺 Fit all users</button>
+          <button class="btn btn-full" onclick="toggleTrails()" id="trailBtn">🧵 Trails: ON</button>
+          <button class="btn btn-full" onclick="clearTrails()">🧼 Clear trails</button>
+        {% endif %}
+        
+        {% if r != 'admin' %}
+          <button class="btn btn-full" onclick="toggleShare()" id="shareBtn">🟢 Share location: ON</button>
+          <button class="btn btn-full" onclick="stopSharing()" id="stopBtn">⛔ Stop sharing</button>
+        {% endif %}
+
+        <button class="btn btn-full" onclick="copyCoords()">📋 Copy coords</button>
+        <a class="btn btn-full" href="/view">🕒 View history</a>
+      </div>
+    </div>
+
+    {% if r == 'admin' %}
+    <div class="panel sidebar">
+      <div class="sidebar-head">
+        <h3>🛰 Live users <span style="color: rgba(11,18,34,0.65); font-weight:700;">(<span id="adminLiveCount">0</span>)</span></h3>
+        <span class="pill" style="margin:0;">
+          <span class="dot"></span> Live
+        </span>
+      </div>
+
+      <input class="search" id="userSearch" placeholder="Search user..." oninput="renderUserList()" />
+
+      <div class="userlist" id="userList"></div>
+
+      <!-- DETAILS PANEL -->
+      <div class="details" id="detailCard">
+        <div class="details-head">
+          <div class="details-title" id="d_user">No user focused</div>
+          <div class="u-actions">
+            <div class="chip" onclick="copyFocusedDetails()">Copy</div>
+            <div class="chip" onclick="unfocus()">Unfocus</div>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="kv"><div class="k">Latitude</div><div class="v" id="d_lat">—</div></div>
+          <div class="kv"><div class="k">Longitude</div><div class="v" id="d_lng">—</div></div>
+          <div class="kv"><div class="k">Accuracy</div><div class="v" id="d_acc">—</div></div>
+          <div class="kv"><div class="k">Last seen</div><div class="v" id="d_seen">—</div></div>
+          <div class="kv"><div class="k">Speed</div><div class="v" id="d_speed">—</div></div>
+          <div class="kv"><div class="k">Note</div><div class="v" id="d_note">Focus updates live</div></div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="panel toast" id="toast">
+      <span class="tag">Tip</span>
+      <span>Admin view: click a user to <b>focus</b>. Details + speed update live.</span>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <script>
+    const role = "{{ r }}";
+  </script>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

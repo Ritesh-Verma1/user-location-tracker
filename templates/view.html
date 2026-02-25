@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Track Sphere | History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#0f172a;
+      --bg2:#070b16;
+
+      --brand:#60a5fa;
+      --brand2:#3b82f6;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --danger:#ff6b6b;
+
+      --shadow: 0 14px 45px rgba(0,0,0,0.35);
+      --radius: 18px;
+
+      --glass: rgba(255,255,255,0.10);
+      --border: rgba(255,255,255,0.16);
+
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.65);
+    }
+
+    *{ margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+    body{
+      min-height: 100vh;
+      background: radial-gradient(circle at 20% 10%, #1e293b, var(--bg1) 60%, var(--bg2) 100%);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ===== Topbar ===== */
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(10,14,25,0.55);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .topbar-inner{
+      width: min(1200px, 94%);
+      margin: 0 auto;
+      padding: 16px 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800; user-select:none;
+    }
+    .brand-badge{
+      width: 34px; height: 34px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      box-shadow: 0 10px 25px rgba(59,130,246,0.35);
+    }
+    .brand span{ color: var(--brand); }
+
+    .actions{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+
+    .btn{
+      border:none; cursor:pointer;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      transition: transform .14s ease, opacity .14s ease;
+      text-decoration: none;
+
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.20);
+      backdrop-filter: blur(10px);
+      color: white;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); opacity: 0.95; }
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      border: none;
+      box-shadow: 0 12px 30px rgba(59,130,246,0.22);
+      color: white;
+    }
+
+    /* ===== Layout ===== */
+    .wrap{
+      width: min(1200px, 94%);
+      margin: 22px auto 96px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .card{
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+
+    .card-head{
+      padding: 16px 16px 12px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+    }
+    .title h1{
+      font-size: 20px;
+      letter-spacing: -0.4px;
+    }
+    .title p{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    /* ===== Filters ===== */
+    .filters{
+      padding: 14px 16px;
+      display:grid;
+      grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr;
+      gap: 10px;
+    }
+    .input, .select{
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(2,6,23,0.28);
+      color: white;
+      outline: none;
+    }
+    .input::placeholder{ color: rgba(255,255,255,0.55); }
+
+    .chips{
+      padding: 0 16px 14px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.88);
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip:hover{ transform: translateY(-1px); }
+
+    /* ===== Table ===== */
+    .table-wrap{
+      width: 100%;
+      overflow:auto;
+    }
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+    }
+    th, td{
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      text-align: left;
+      font-size: 13.5px;
+      white-space: nowrap;
+    }
+    th{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(2,6,23,0.65);
+      backdrop-filter: blur(10px);
+      font-size: 12px;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+      cursor: pointer;
+    }
+    tbody tr:hover{
+      background: rgba(255,255,255,0.06);
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .tag.good{ border-color: rgba(52,211,153,0.35); }
+    .tag.good::before{
+      content:"";
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 14px rgba(52,211,153,0.6);
+      display:inline-block;
+    }
+
+    /* ===== Pagination ===== */
+    .footer{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
+    }
+    .muted{ color: var(--muted); font-size: 13px; }
+
+    .pager{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .pbtn{
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: white;
+      cursor:pointer;
+      font-weight:800;
+    }
+    .pbtn:disabled{ opacity: 0.4; cursor:not-allowed; }
+
+    /* ===== Floating buttons ===== */
+    .floatbar{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      z-index: 80;
+    }
+    .fab{
+      width: 52px; height: 52px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(2,6,23,0.55);
+      backdrop-filter: blur(14px);
+      color: white;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+      transition: transform .15s ease;
+      font-size: 18px;
+      user-select:none;
+    }
+    .fab:hover{ transform: translateY(-2px); }
+    .fab.primary{
+      background: linear-gradient(135deg, var(--brand2), var(--brand));
+      border:none;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px){
+      .filters{ grid-template-columns: 1fr 1fr; }
+      table{ min-width: 760px; }
+    }
+    @media (max-width: 520px){
+      .filters{ grid-template-columns: 1fr; }
+      .floatbar{ right: 12px; bottom: 12px; }
+      .fab{ width: 48px; height: 48px; border-radius: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  {# If you pass role/username from Flask, great. If not, safe defaults. #}
+  {% set r = role | default('user') %}
+  {% set me = username | default('') %}
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-badge"></div>
+        Track <span>Sphere</span>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="/map">🗺 Back to Map</a>
+        <a class="btn btn-primary" href="/logout">🚪 Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="card-head">
+        <div class="title">
+          <h1>📜 Location History</h1>
+          <p>Search, filter, export — clean and consistent with your Track Sphere theme.</p>
+        </div>
+        <div class="tag good">Live</div>
+      </div>
+
+      <div class="filters">
+        <input class="input" id="q" placeholder="Search by ID / lat / lng / time / username..." />
+        <input class="input" id="from" type="datetime-local" />
+        <input class="input" id="to" type="datetime-local" />
+        <select class="select" id="userFilter">
+          <option value="">All users</option>
+        </select>
+      </div>
+
+      <div class="chips">
+        <div class="chip" onclick="resetFilters()">🧼 Reset</div>
+        <div class="chip" onclick="exportCSV()">📦 Export CSV</div>
+        <div class="chip" onclick="copyVisible()">📋 Copy visible</div>
+        <div class="chip" onclick="load()">⟳ Refresh</div>
+        <span class="muted" id="statsText">Loading...</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortBy('id')">ID</th>
+              <th onclick="sortBy('username')">Username</th>
+              <th onclick="sortBy('latitude')">Latitude</th>
+              <th onclick="sortBy('longitude')">Longitude</th>
+              <th onclick="sortBy('accuracy')">Accuracy</th>
+              <th onclick="sortBy('time')">Time</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        <div class="muted" id="countText">—</div>
+        <div class="pager">
+          <button class="pbtn" id="prevBtn" onclick="prevPage()">← Prev</button>
+          <span class="muted" id="pageText">Page 1</span>
+          <button class="pbtn" id="nextBtn" onclick="nextPage()">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Buttons -->
+  <div class="floatbar">
+    <div class="fab" title="Back" onclick="history.back()">↩</div>
+    <div class="fab primary" title="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+  </div>
+
+  <script>
+    const ROLE = "{{ r }}";
+    const ME = "{{ me }}";
+
+    let raw = [];
+    let filtered = [];
+    let sortKey = "id";
+    let sortDir = "desc"; // history usually newest first feels better
+
+    let page = 1;
+    const pageSize = 12;
+
+    const el = (id) => document.getElementById(id);
+
+    function parseDTLocal(v){
+      if(!v) return null;
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function normalizeRow(row){
+      return {
+        id: row.id,
+        username: row.username || ME || "—",
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+        accuracy: row.accuracy === undefined || row.accuracy === null ? null : Number(row.accuracy),
+        time: row.time
+      };
+    }
+
+    function load(){
+      el("statsText").textContent = "Loading...";
+      fetch("/api/locations")
+        .then(r => r.json())
+        .then(data => {
+          raw = (data || []).map(normalizeRow);
+
+          buildUserFilter();
+          page = 1;
+          apply();
+        })
+        .catch(err => {
+          el("statsText").textContent = "Failed to load data";
+          console.error(err);
+        });
+    }
+
+    function buildUserFilter(){
+      const uf = el("userFilter");
+
+      // If your backend only returns current user's data, this will still work.
+      // If admin gets all users, it will auto-populate.
+      const users = Array.from(new Set(raw.map(r => r.username))).sort((a,b)=>a.localeCompare(b));
+
+      // If only one user, keep filter simple
+      if(users.length <= 1){
+        uf.innerHTML = `<option value="">${users[0] || "My data"}</option>`;
+        uf.disabled = true;
+        return;
+      }
+
+      uf.disabled = false;
+      uf.innerHTML = `<option value="">All users</option>` + users.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join("");
+    }
+
+    function apply(){
+      const q = (el("q").value || "").trim().toLowerCase();
+      const from = parseDTLocal(el("from").value);
+      const to = parseDTLocal(el("to").value);
+      const uf = el("userFilter").value;
+
+      filtered = raw.filter(r => {
+        if(uf && r.username !== uf) return false;
+
+        const t = new Date(r.time.replace(" ", "T"));
+        if(from && t < from) return false;
+        if(to && t > to) return false;
+
+        if(q){
+          const blob = `${r.id} ${r.username} ${r.latitude} ${r.longitude} ${r.accuracy ?? ""} ${r.time}`.toLowerCase();
+          if(!blob.includes(q)) return false;
+        }
+        return true;
+      });
+
+      filtered.sort((a,b) => compare(a,b,sortKey,sortDir));
+
+      const maxPage = Math.max(1, Math.ceil(filtered.length / pageSize));
+      page = Math.min(Math.max(page, 1), maxPage);
+
+      render();
+      renderStats();
+    }
+
+    function compare(a,b,key,dir){
+      const mul = dir === "asc" ? 1 : -1;
+
+      if(key === "time"){
+        const ta = new Date(a.time.replace(" ", "T")).getTime();
+        const tb = new Date(b.time.replace(" ", "T")).getTime();
+        return (ta - tb) * mul;
+      }
+      if(key === "username"){
+        return a.username.localeCompare(b.username) * mul;
+      }
+
+      const va = a[key] ?? -Infinity;
+      const vb = b[key] ?? -Infinity;
+      return (va - vb) * mul;
+    }
+
+    function sortBy(key){
+      if(sortKey === key){
+        sortDir = (sortDir === "asc" ? "desc" : "asc");
+      }else{
+        sortKey = key;
+        sortDir = (key === "time" || key === "id") ? "desc" : "asc";
+      }
+      apply();
+    }
+
+    function render(){
+      const start = (page - 1) * pageSize;
+      const chunk = filtered.slice(start, start + pageSize);
+
+      el("tbody").innerHTML = chunk.map(r => `
+        <tr>
+          <td><b>#${r.id}</b></td>
+          <td>${escapeHtml(r.username)}</td>
+          <td>${Number.isFinite(r.latitude) ? r.latitude.toFixed(6) : "—"}</td>
+          <td>${Number.isFinite(r.longitude) ? r.longitude.toFixed(6) : "—"}</td>
+          <td>${r.accuracy === null || !Number.isFinite(r.accuracy) ? "—" : Math.round(r.accuracy) + " m"}</td>
+          <td>${escapeHtml(r.time)}</td>
+        </tr>
+      `).join("");
+
+      const maxPage = Math.max(1, Math.ceil(filtered.length / pageSize));
+      el("pageText").textContent = `Page ${page} / ${maxPage}`;
+      el("prevBtn").disabled = page <= 1;
+      el("nextBtn").disabled = page >= maxPage;
+
+      el("countText").textContent = `${filtered.length} record(s) • Sorted by ${sortKey} (${sortDir})`;
+    }
+
+    function renderStats(){
+      if(raw.length === 0){
+        el("statsText").textContent = "No data yet.";
+        return;
+      }
+      const users = new Set(raw.map(r => r.username));
+      el("statsText").textContent = `Total: ${raw.length} • Users: ${users.size}`;
+    }
+
+    function nextPage(){ page++; render(); }
+    function prevPage(){ page--; render(); }
+
+    function resetFilters(){
+      el("q").value = "";
+      el("from").value = "";
+      el("to").value = "";
+      el("userFilter").value = "";
+      page = 1;
+      apply();
+    }
+
+    function exportCSV(){
+      if(filtered.length === 0){
+        alert("No data to export (filters removed everything).");
+        return;
+      }
+      const headers = ["id","username","latitude","longitude","accuracy","time"];
+      const rows = filtered.map(r => headers.map(h => (r[h] ?? "")).join(","));
+      const csv = headers.join(",") + "\n" + rows.join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "track-sphere-history.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    }
+
+    function copyVisible(){
+      const start = (page - 1) * pageSize;
+      const chunk = filtered.slice(start, start + pageSize);
+      const text = chunk.map(r =>
+        `#${r.id} | ${r.username} | ${r.latitude} | ${r.longitude} | ${r.accuracy ?? "—"} | ${r.time}`
+      ).join("\n");
+
+      navigator.clipboard.writeText(text)
+        .then(()=>alert("Copied current page rows ✅"))
+        .catch(()=>alert("Copy failed (browser blocked clipboard)."));
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    ["q","from","to","userFilter"].forEach(id => {
+      const node = el(id);
+      if(!node) return;
+      node.addEventListener("input", () => { page = 1; apply(); });
+      node.addEventListener("change", () => { page = 1; apply(); });
+    });
+
+    load();
+  </script>
+</body>
+</html>
